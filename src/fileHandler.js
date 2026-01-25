@@ -144,6 +144,25 @@ export function getRelativeTexturePath(mtlPath, texturePath) {
 }
 
 /**
+ * Upscale texture to 1024×1024 using nearest-neighbor interpolation
+ * @param {string} inputTexturePath - Path to input texture
+ * @param {string} outputTexturePath - Path to save upscaled texture
+ * @returns {Promise<void>}
+ */
+export async function upscaleTexture(inputTexturePath, outputTexturePath) {
+  try {
+    await ensureDirectoryExists(path.dirname(outputTexturePath));
+    await sharp(inputTexturePath)
+      .resize(1024, 1024, {
+        kernel: sharp.kernel.nearest
+      })
+      .toFile(outputTexturePath);
+  } catch (error) {
+    throw new Error(`Failed to upscale texture: ${error.message}`);
+  }
+}
+
+/**
  * Generate output file paths
  * @param {string} inputTexturePath - Path to input texture
  * @param {string} inputBaseDir - Base input directory

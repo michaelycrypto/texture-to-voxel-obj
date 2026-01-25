@@ -11,11 +11,15 @@
 - User wants corresponding OBJ files generated for each item texture
 - Process should replicate BlockBench's "import from texture" behavior automatically
 - Output OBJ files can be used for 3D item models in Minecraft or other applications
+- User has a texturepack structure with an "items" folder and wants to process all textures in that folder
+- User wants to apply a uniform scale factor to the entire texture pack (all models scaled consistently)
 
 **Secondary Use Cases:**
 - Converting Minecraft resource pack item textures to 3D models
 - Batch processing custom item textures for mods
 - Automating repetitive texture-to-model workflows for Minecraft assets
+- Processing texturepack structures with nested folder organization
+- Scaling entire texture packs uniformly for consistent model sizes
 
 ---
 
@@ -30,32 +34,58 @@
   - Have valid PNG format
 - **FR-1.4**: Support single file input mode (process one texture file)
 - **FR-1.5**: Generate output filenames based on input texture names (e.g., `diamond_sword.png` → `diamond_sword.obj`)
+- **FR-1.6**: Support texturepack structure detection:
+  - Automatically detect and process files in "items" and "blocks" folders within the texturepack structure
+  - If input path contains an "items" folder, process all PNG files within that folder (generate OBJ models)
+  - If input path contains a "blocks" folder, process all PNG files within that folder (upscale textures only, no OBJ generation)
+  - Preserve texturepack directory structure in output (e.g., `texturepack/items/` → `output/models/items/`)
+- **FR-1.7**: Texturepack-aware processing:
+  - When processing a texturepack, apply uniform scale to all item textures in the pack
+  - Scale factor applies consistently across all item models in the texturepack
+  - Blocks textures are only upscaled to 1024×1024 resolution (no OBJ generation)
 
 ### 2.2 Conversion Logic
-- **FR-2.1**: Replicate BlockBench's "import from texture" algorithm:
+- **FR-2.1**: Replicate BlockBench's "import from texture" algorithm (for items only):
   - Assume 16x16 pixel textures (square)
   - Generate UV-mapped quad geometry (2 triangles forming a square)
   - Map texture coordinates to cover full quad (0,0 to 1,1)
   - Set appropriate vertex normals (typically facing forward: 0, 0, 1)
+  - **Note**: This applies only to textures in "items" folders, not "blocks" folders
 - **FR-2.2**: Quad dimensions:
   - Default: 1x1 unit (square, matching 16x16 texture aspect ratio)
   - Optional: Custom scale via config (maintains square aspect ratio)
-- **FR-2.3**: Generate OBJ-compliant geometry:
+- **FR-2.3**: Generate OBJ-compliant geometry (for items only):
   - Vertex positions (v) - 4 vertices forming a square quad
   - Texture coordinates (vt) - Full UV mapping (0,0), (1,0), (1,1), (0,1)
   - Face definitions (f) with vertex/texture indices
   - Vertex normals (vn) - Forward-facing normals
+- **FR-2.4**: Texturepack-wide scaling:
+  - Apply uniform scale factor to all item models within a texturepack
+  - Scale factor specified via CLI or config applies to entire texturepack
+  - All OBJ files in the texturepack use the same scale factor for consistency
+  - Scale applies to model geometry (vertex positions), not texture resolution
+- **FR-2.5**: Blocks texture processing:
+  - Blocks textures are upscaled to 1024×1024 using nearest-neighbor interpolation
+  - No OBJ or MTL files are generated for blocks textures
+  - Upscaled blocks textures are saved in the output texturepack's models folder
 
 ### 2.3 Output Generation
-- **FR-3.1**: Generate `.obj` file for each processed texture
-- **FR-3.2**: Create corresponding `.mtl` (Material Template Library) file:
-  - Reference texture file path
+- **FR-3.1**: Generate `.obj` file for each processed item texture (not for blocks)
+- **FR-3.2**: Create corresponding `.mtl` (Material Template Library) file for items:
+  - Reference upscaled texture file path (1024×1024)
   - Set up material properties (diffuse map)
 - **FR-3.3**: Support configurable output directory:
   - Default: Same directory as input texture
   - Optional: Specified output folder
 - **FR-3.4**: Preserve relative directory structure in output (if recursive processing)
 - **FR-3.5**: Generate OBJ files that are compatible with standard 3D software (Blender, Maya, etc.)
+- **FR-3.6**: Texturepack structure output:
+  - Output all files (OBJ, MTL, and upscaled textures) to a `models` folder within the output texturepack
+  - When processing texturepack with "items" folder, generate OBJ/MTL files in `output/{texturepack}/models/items/`
+  - When processing texturepack with "blocks" folder, generate upscaled 1024×1024 textures in `output/{texturepack}/models/blocks/`
+  - Maintain folder structure in output (e.g., `texturepack/items/*.png` → `output/{texturepack}/models/items/*.obj` and `*_1024.png`)
+  - All OBJ files in texturepack share the same scale factor for consistent sizing
+  - All textures (items and blocks) are upscaled to 1024×1024 resolution
 
 ### 2.4 Error Handling
 - **FR-4.1**: Skip invalid/corrupted texture files with error logging
@@ -110,10 +140,21 @@ node src/index.js --input ./items --output ./models
 --output, -o    Output folder path (optional, defaults to input folder)
 --recursive, -r   Process subdirectories recursively (default: true)
 --scale          Scale factor for quad size (default: 1.0, maintains 1:1 aspect ratio)
+                When processing texturepack, applies uniformly to all models in pack
+--texturepack    Enable texturepack mode: automatically process "items" folder if present
 --help, -h      Show help
 
 # Examples
+# Basic folder conversion
 node src/index.js -i ./minecraft/textures/items -o ./output/models
+
+# Texturepack processing (auto-detects items folder)
+node src/index.js -i ./texturepack --texturepack -o ./output --scale 2.0
+
+# Direct items folder processing
+node src/index.js -i ./texturepack/items -o ./output/models --scale 1.5
+
+# Non-recursive processing
 node src/index.js --input ./items --recursive false
 ```
 
@@ -194,6 +235,9 @@ node src/index.js --input ./items --recursive false
 5. CLI documentation is complete and accurate
 6. Tool correctly processes 16x16 Minecraft item texture format
 7. Generated models display textures correctly when opened in 3D software
+8. Tool detects and processes "items" folder within texturepack structure
+9. Uniform scale factor applies consistently across all models in a texturepack
+10. Output preserves texturepack directory structure (items folder maintained in output)
 
 ---
 
@@ -206,6 +250,8 @@ node src/index.js --input ./items --recursive false
 - Texture files are named appropriately (no special character issues)
 - Output directory permissions allow file creation
 - Users want square quad models (1:1 aspect ratio) matching 16x16 texture format
+- Texturepack structures follow standard Minecraft resource pack organization (with "items" folder)
+- When scaling a texturepack, all models should use the same scale factor for consistency
 
 **Technical Notes:**
 - BlockBench's exact algorithm may need reverse-engineering or documentation review
