@@ -1,0 +1,7 @@
+{
+  "Containers": ["chest", "bed", "barrel", "shulker_box"],
+  "Utility": ["anvil", "grindstone", "lectern", "brewing_stand", "enchanting_table", "stonecutter", "cauldron"],
+  "Decorative": ["lantern", "campfire", "flower_pot", "torch", "bell_floor", "dragon_egg"],
+  "Redstone": ["hopper", "composter"],
+  "Structural": ["stairs", "fence_post", "door", "ladder", "end_portal_frame"]
+}

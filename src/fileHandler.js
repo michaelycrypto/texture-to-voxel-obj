@@ -149,17 +149,82 @@ export function getRelativeTexturePath(mtlPath, texturePath) {
  * @param {string} outputTexturePath - Path to save upscaled texture
  * @returns {Promise<void>}
  */
-export async function upscaleTexture(inputTexturePath, outputTexturePath) {
+export async function upscaleTexture(inputTexturePath, outputTexturePath, size = 1024) {
   try {
     await ensureDirectoryExists(path.dirname(outputTexturePath));
     await sharp(inputTexturePath)
-      .resize(1024, 1024, {
+      .resize(size, size, {
         kernel: sharp.kernel.nearest
       })
       .toFile(outputTexturePath);
   } catch (error) {
     throw new Error(`Failed to upscale texture: ${error.message}`);
   }
+}
+
+/**
+ * Calculate the bounding box of non-transparent pixels in an image
+ * @param {string} imagePath - Path to the image file
+ * @param {number} alphaThreshold - Alpha threshold (0-255, default: 128)
+ * @returns {Promise<{x: number, y: number} | null>} Pixel dimensions or null if fully transparent
+ */
+export async function calculatePixelBounds(imagePath, alphaThreshold = 128) {
+  try {
+    const { data, info } = await sharp(imagePath)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const width = info.width;
+    const height = info.height;
+    const channels = info.channels;
+
+    let minX = width, maxX = -1, minY = height, maxY = -1;
+
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const index = (y * width + x) * channels;
+        const alpha = data[index + 3];
+        if (alpha >= alphaThreshold) {
+          minX = Math.min(minX, x);
+          maxX = Math.max(maxX, x);
+          minY = Math.min(minY, y);
+          maxY = Math.max(maxY, y);
+        }
+      }
+    }
+
+    if (minX > maxX || minY > maxY) return null;
+    return { x: maxX - minX + 1, y: maxY - minY + 1 };
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Write item pixel sizes to a Lua file
+ * @param {string} outputPath - Path to output Lua file
+ * @param {Object} pixelSizes - Map of item names to {x, y} sizes
+ * @param {string} texturepackName - Name of the texturepack
+ * @returns {Promise<void>}
+ */
+export async function writePixelSizesLua(outputPath, pixelSizes, texturepackName) {
+  let lua = '--[[\n';
+  lua += `\tItem pixel sizes for ${texturepackName} texturepack\n`;
+  lua += '\tGenerated automatically by texturepack-converter\n';
+  lua += ']]\n\n';
+  lua += 'local ITEM_PX_SIZES = {\n';
+
+  const sortedNames = Object.keys(pixelSizes).sort((a, b) => a.localeCompare(b));
+  for (const name of sortedNames) {
+    const size = pixelSizes[name];
+    lua += `\t["${name}"] = {x = ${size.x}, y = ${size.y}},\n`;
+  }
+
+  lua += '}\n\nreturn ITEM_PX_SIZES\n';
+
+  await ensureDirectoryExists(path.dirname(outputPath));
+  await fs.writeFile(outputPath, lua, 'utf8');
 }
 
 /**

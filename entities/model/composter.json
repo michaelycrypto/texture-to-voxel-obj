@@ -1,0 +1,67 @@
+{
+  "name": "composter",
+  "credit": "Minecraft Default Assets",
+  "parent": "block/block",
+  "textures": {
+    "particle": "block/composter_side",
+    "top": "block/composter_top",
+    "bottom": "block/composter_bottom",
+    "side": "block/composter_side",
+    "inside": "block/composter_bottom"
+  },
+  "elements": [
+    {
+      "__comment": "Bottom",
+      "from": [0, 0, 0],
+      "to": [16, 2, 16],
+      "faces": {
+        "up": { "texture": "#inside" },
+        "down": { "texture": "#bottom", "cullface": "down" }
+      }
+    },
+    {
+      "__comment": "West wall",
+      "from": [0, 0, 0],
+      "to": [2, 16, 16],
+      "faces": {
+        "up": { "texture": "#top", "cullface": "up" },
+        "north": { "texture": "#side", "cullface": "north" },
+        "south": { "texture": "#side", "cullface": "south" },
+        "west": { "texture": "#side", "cullface": "west" },
+        "east": { "texture": "#side" }
+      }
+    },
+    {
+      "__comment": "East wall",
+      "from": [14, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "up": { "texture": "#top", "cullface": "up" },
+        "north": { "texture": "#side", "cullface": "north" },
+        "south": { "texture": "#side", "cullface": "south" },
+        "west": { "texture": "#side" },
+        "east": { "texture": "#side", "cullface": "east" }
+      }
+    },
+    {
+      "__comment": "North wall",
+      "from": [2, 0, 0],
+      "to": [14, 16, 2],
+      "faces": {
+        "up": { "texture": "#top", "cullface": "up" },
+        "north": { "texture": "#side", "cullface": "north" },
+        "south": { "texture": "#side" }
+      }
+    },
+    {
+      "__comment": "South wall",
+      "from": [2, 0, 14],
+      "to": [14, 16, 16],
+      "faces": {
+        "up": { "texture": "#top", "cullface": "up" },
+        "north": { "texture": "#side" },
+        "south": { "texture": "#side", "cullface": "south" }
+      }
+    }
+  ]
+}

@@ -2,10 +2,11 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import ora from 'ora';
 import path from 'path';
 import fs from 'fs-extra';
 import { convertDirectory, convertTexturepacks, convertTexturepack, findItemsFolder, findBlocksFolder } from './converter.js';
+import { uploadTexturepack } from './uploader.js';
+import { Spinner } from './progress.js';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,8 +30,11 @@ program
   .option('-s, --scale <number>', 'Scale factor for model size (applied uniformly to texturepack)', parseFloat, defaultConfig.scale)
   .option('--coordinate-system <system>', 'Coordinate system (z-up or y-up)', defaultConfig.coordinateSystem)
   .option('--texturepack-mode', 'Process texturepacks (default: auto-detect)', false)
+  .option('-f, --format <format>', 'Output format: obj, fbx, or both', 'both')
+  .option('--upload', 'Upload FBX models to Roblox after conversion (requires .env config)', false)
   .action(async (options) => {
-    const spinner = ora('Initializing converter...').start();
+    const spinner = new Spinner('Initializing converter...');
+    spinner.start();
 
     try {
       // Resolve paths
@@ -39,7 +43,7 @@ program
 
       // Validate input path
       if (!(await fs.pathExists(inputPath))) {
-        spinner.fail(chalk.red(`Input path does not exist: ${inputPath}`));
+        spinner.fail(`Input path does not exist: ${inputPath}`);
         process.exit(1);
       }
 
@@ -81,7 +85,7 @@ program
       // Ensure output directory exists
       await fs.ensureDir(outputDir);
 
-      spinner.succeed(chalk.green('Input path validated'));
+      spinner.succeed('Input path validated');
 
       let results;
 
@@ -92,16 +96,13 @@ program
 
         if (itemsPath || blocksPath) {
           // Process as single texturepack
-          spinner.start('Processing texturepack...');
-
           const packResults = await convertTexturepack({
             texturepackPath: inputPath,
             outputBaseDir: outputDir,
             scale: options.scale,
             coordinateSystem: options.coordinateSystem,
-            onProgress: (progress) => {
-              // Silent progress for batch processing
-            }
+            format: options.format,
+            showProgress: true
           });
 
           results = {
@@ -116,84 +117,61 @@ program
           };
         } else {
           // Process as directory of texturepacks
-          spinner.start('Scanning for texturepacks...');
+          spinner.updateText('Scanning for texturepacks...');
 
           results = await convertTexturepacks({
             texturepacksDir: inputPath,
             outputDir,
             scale: options.scale,
-            coordinateSystem: options.coordinateSystem,
-            onProgress: (progress) => {
-              // Silent progress for batch processing
-            }
+            coordinateSystem: options.coordinateSystem
           });
         }
 
-        spinner.stop();
-
-        // Display results
-        console.log('\n' + chalk.bold('Texturepack Conversion Summary:'));
-        console.log(chalk.cyan(`Processed ${results.texturepacks.length} texturepack(s)`));
-        console.log(chalk.green(`✓ Successfully converted: ${results.success} files`));
-
-        if (results.warnings > 0) {
-          console.log(chalk.yellow(`⚠ Warnings: ${results.warnings} files`));
-        }
-
-        if (results.failed > 0) {
-          console.log(chalk.red(`✗ Failed: ${results.failed} files`));
-        }
-
-        // Show per-texturepack breakdown
-        if (results.texturepacks.length > 0) {
-          console.log('\n' + chalk.bold('Per Texturepack:'));
-          results.texturepacks.forEach(({ name, results: packResults }) => {
-            console.log(`  ${chalk.cyan(name)}: ${chalk.green(packResults.success)} success, ${chalk.red(packResults.failed)} failed`);
-          });
-        }
-
-        if (results.errors.length > 0) {
-          console.log(chalk.red('\nErrors:'));
+        // Summary is now shown by the progress tracker
+        if (results.errors.length > 0 && results.errors.length <= 10) {
+          console.log(chalk.red('Errors:'));
           results.errors.forEach((error, index) => {
-            console.log(chalk.red(`  ${index + 1}. ${error}`));
+            console.log(chalk.red(`  ${index + 1}. ${error.substring(0, 80)}${error.length > 80 ? '...' : ''}`));
           });
         }
       } else {
         // Directory mode: process single directory
         if (!isDirectory) {
-          spinner.fail(chalk.red(`Input path is not a directory: ${inputPath}`));
+          spinner.fail(`Input path is not a directory: ${inputPath}`);
           process.exit(1);
         }
 
-        spinner.start('Scanning for PNG files...');
+        const dirSpinner = new Spinner('Scanning for PNG files...');
+        dirSpinner.start();
 
         results = await convertDirectory({
           inputDir: inputPath,
           outputDir,
           recursive: options.recursive,
           scale: options.scale,
-          coordinateSystem: options.coordinateSystem,
-          onProgress: (progress) => {
-            // Silent progress for batch processing
-          }
+          coordinateSystem: options.coordinateSystem
         });
 
-        spinner.stop();
-
-        // Display results
-        console.log('\n' + chalk.bold('Conversion Summary:'));
-        console.log(chalk.green(`✓ Successfully converted: ${results.success} files`));
-
-        if (results.warnings > 0) {
-          console.log(chalk.yellow(`⚠ Warnings: ${results.warnings} files`));
-        }
+        dirSpinner.succeed(`Converted ${results.success} files`);
 
         if (results.failed > 0) {
-          console.log(chalk.red(`✗ Failed: ${results.failed} files`));
-          console.log(chalk.red('\nErrors:'));
-          results.errors.forEach((error, index) => {
-            console.log(chalk.red(`  ${index + 1}. ${error}`));
+          console.log(chalk.red(`\n✗ Failed: ${results.failed} files`));
+          results.errors.slice(0, 5).forEach((error, index) => {
+            console.log(chalk.red(`  ${index + 1}. ${error.substring(0, 80)}${error.length > 80 ? '...' : ''}`));
           });
+        }
+      }
+
+      // Upload to Roblox if requested
+      if (options.upload && useTexturepackMode && results.texturepacks) {
+        console.log('\n' + chalk.bold('Starting Roblox Upload...'));
+        
+        for (const { name } of results.texturepacks) {
+          try {
+            await uploadTexturepack(name, outputDir);
+          } catch (uploadError) {
+            console.error(chalk.red(`Upload failed for ${name}: ${uploadError.message}`));
+          }
         }
       }
 

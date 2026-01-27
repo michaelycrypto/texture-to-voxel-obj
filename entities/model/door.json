@@ -1,0 +1,24 @@
+{
+  "name": "door_bottom",
+  "credit": "Community Recreation - Based on Minecraft Default",
+  "__comment": "Door bottom half template",
+  "textures": {
+    "bottom": "block/oak_door_bottom",
+    "top": "block/oak_door_top"
+  },
+  "elements": [
+    {
+      "__comment": "Door panel (bottom half)",
+      "from": [0, 0, 0],
+      "to": [3, 16, 16],
+      "faces": {
+        "down": { "uv": [0, 13, 16, 16], "texture": "#bottom", "cullface": "down" },
+        "up": { "uv": [0, 0, 16, 3], "texture": "#bottom" },
+        "north": { "uv": [0, 0, 3, 16], "texture": "#bottom", "cullface": "north" },
+        "south": { "uv": [13, 0, 16, 16], "texture": "#bottom", "cullface": "south" },
+        "west": { "uv": [0, 0, 16, 16], "texture": "#bottom", "cullface": "west" },
+        "east": { "uv": [0, 0, 16, 16], "texture": "#bottom" }
+      }
+    }
+  ]
+}

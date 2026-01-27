@@ -1,0 +1,94 @@
+{
+  "name": "hopper",
+  "credit": "Minecraft Default Assets",
+  "ambientocclusion": false,
+  "textures": {
+    "particle": "block/hopper_outside",
+    "top": "block/hopper_top",
+    "side": "block/hopper_outside",
+    "inside": "block/hopper_inside"
+  },
+  "elements": [
+    {
+      "__comment": "Top rim",
+      "from": [0, 10, 0],
+      "to": [16, 11, 16],
+      "faces": {
+        "down": { "texture": "#inside" },
+        "up": { "texture": "#inside", "cullface": "up" },
+        "north": { "texture": "#side", "cullface": "north" },
+        "south": { "texture": "#side", "cullface": "south" },
+        "west": { "texture": "#side", "cullface": "west" },
+        "east": { "texture": "#side", "cullface": "east" }
+      }
+    },
+    {
+      "__comment": "West wall",
+      "from": [0, 11, 0],
+      "to": [2, 16, 16],
+      "faces": {
+        "up": { "texture": "#top", "cullface": "up" },
+        "north": { "texture": "#side", "cullface": "north" },
+        "south": { "texture": "#side", "cullface": "south" },
+        "west": { "texture": "#side", "cullface": "west" },
+        "east": { "texture": "#side", "cullface": "up" }
+      }
+    },
+    {
+      "__comment": "East wall",
+      "from": [14, 11, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "up": { "texture": "#top", "cullface": "up" },
+        "north": { "texture": "#side", "cullface": "north" },
+        "south": { "texture": "#side", "cullface": "south" },
+        "west": { "texture": "#side", "cullface": "up" },
+        "east": { "texture": "#side", "cullface": "east" }
+      }
+    },
+    {
+      "__comment": "North wall",
+      "from": [2, 11, 0],
+      "to": [14, 16, 2],
+      "faces": {
+        "up": { "texture": "#top", "cullface": "up" },
+        "north": { "texture": "#side", "cullface": "north" },
+        "south": { "texture": "#side", "cullface": "up" }
+      }
+    },
+    {
+      "__comment": "South wall",
+      "from": [2, 11, 14],
+      "to": [14, 16, 16],
+      "faces": {
+        "up": { "texture": "#top", "cullface": "up" },
+        "north": { "texture": "#side", "cullface": "up" },
+        "south": { "texture": "#side", "cullface": "south" }
+      }
+    },
+    {
+      "__comment": "Center funnel",
+      "from": [4, 4, 4],
+      "to": [12, 10, 12],
+      "faces": {
+        "down": { "texture": "#inside" },
+        "north": { "texture": "#side" },
+        "south": { "texture": "#side" },
+        "west": { "texture": "#side" },
+        "east": { "texture": "#side" }
+      }
+    },
+    {
+      "__comment": "Bottom spout",
+      "from": [6, 0, 6],
+      "to": [10, 4, 10],
+      "faces": {
+        "down": { "texture": "#inside", "cullface": "down" },
+        "north": { "texture": "#side" },
+        "south": { "texture": "#side" },
+        "west": { "texture": "#side" },
+        "east": { "texture": "#side" }
+      }
+    }
+  ]
+}
