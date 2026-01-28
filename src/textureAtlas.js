@@ -11,12 +11,14 @@ import sharp from 'sharp';
  * TextureAtlas class for managing textures and UV mappings
  */
 export class TextureAtlas {
-  constructor() {
+  constructor(options = {}) {
     this.textures = new Map(); // path -> { image, width, height, x, y }
     this.atlasImage = null;
     this.atlasWidth = 0;
     this.atlasHeight = 0;
     this.textureSize = 16; // Default Minecraft texture size
+    this.targetResolution = options.targetResolution || 8192; // Target output resolution for upscaling
+    this.originalTextureSize = 0; // Track original texture size for UV calculations
   }
   
   /**
@@ -38,13 +40,16 @@ export class TextureAtlas {
             image,
             width: metadata.width,
             height: metadata.height,
+            originalWidth: metadata.width,  // Store original for UV calculations
+            originalHeight: metadata.height,
             x: 0,
             y: 0
           });
           
-          // Update texture size if different
-          if (metadata.width > this.textureSize) {
-            this.textureSize = metadata.width;
+          // Update texture size if different (use larger dimension for non-square)
+          const maxDim = Math.max(metadata.width, metadata.height);
+          if (maxDim > this.textureSize) {
+            this.textureSize = maxDim;
           }
         } else {
           console.warn(`Texture not found: ${texturePath}`);
@@ -57,19 +62,20 @@ export class TextureAtlas {
   
   /**
    * Build the texture atlas from loaded textures
+   * Upscales to targetResolution using nearest-neighbor to preserve pixel art
    * @returns {Promise<Buffer>} Atlas image as PNG buffer
    */
   async buildAtlas() {
     const textureCount = this.textures.size;
     
     if (textureCount === 0) {
-      // Create a placeholder magenta texture
-      this.atlasWidth = 16;
-      this.atlasHeight = 16;
+      // Create a placeholder magenta texture at target resolution
+      this.atlasWidth = this.targetResolution;
+      this.atlasHeight = this.targetResolution;
       this.atlasImage = await sharp({
         create: {
-          width: 16,
-          height: 16,
+          width: this.targetResolution,
+          height: this.targetResolution,
           channels: 4,
           background: { r: 255, g: 0, b: 255, a: 255 }
         }
@@ -78,25 +84,33 @@ export class TextureAtlas {
     }
     
     if (textureCount === 1) {
-      // Single texture - use directly
+      // Single texture - upscale to target resolution
       const [texture] = this.textures.values();
-      this.atlasWidth = texture.width;
-      this.atlasHeight = texture.height;
-      this.atlasImage = await sharp(texture.path).png().toBuffer();
+      this.originalTextureSize = texture.width; // Store original for UV calculation
+      this.atlasWidth = this.targetResolution;
+      this.atlasHeight = this.targetResolution;
+      
+      // Upscale using nearest-neighbor to preserve pixel art
+      this.atlasImage = await sharp(texture.path)
+        .resize(this.targetResolution, this.targetResolution, { 
+          kernel: 'nearest',
+          fit: 'fill'
+        })
+        .png()
+        .toBuffer();
+      
       return this.atlasImage;
     }
     
-    // Multiple textures - create atlas
+    // Multiple textures - create atlas then upscale
     // Calculate atlas dimensions (power of 2, square)
     const gridSize = Math.ceil(Math.sqrt(textureCount));
-    this.atlasWidth = gridSize * this.textureSize;
-    this.atlasHeight = gridSize * this.textureSize;
+    const baseAtlasSize = gridSize * this.textureSize;
     
     // Round up to power of 2
-    this.atlasWidth = nextPowerOf2(this.atlasWidth);
-    this.atlasHeight = nextPowerOf2(this.atlasHeight);
+    const baseSize = nextPowerOf2(baseAtlasSize);
     
-    // Position textures in grid
+    // Position textures in grid at base size
     let index = 0;
     for (const [texturePath, texture] of this.textures) {
       const gridX = index % gridSize;
@@ -106,7 +120,7 @@ export class TextureAtlas {
       index++;
     }
     
-    // Composite textures into atlas
+    // Composite textures into atlas at base size
     const composites = [];
     for (const [texturePath, texture] of this.textures) {
       // Resize texture to standard size if needed
@@ -124,11 +138,11 @@ export class TextureAtlas {
       });
     }
     
-    // Create atlas with transparent background
-    this.atlasImage = await sharp({
+    // Create base atlas with transparent background
+    const baseAtlas = await sharp({
       create: {
-        width: this.atlasWidth,
-        height: this.atlasHeight,
+        width: baseSize,
+        height: baseSize,
         channels: 4,
         background: { r: 0, g: 0, b: 0, alpha: 0 }
       }
@@ -136,6 +150,26 @@ export class TextureAtlas {
     .composite(composites)
     .png()
     .toBuffer();
+    
+    // Upscale to target resolution
+    this.atlasWidth = this.targetResolution;
+    this.atlasHeight = this.targetResolution;
+    
+    this.atlasImage = await sharp(baseAtlas)
+      .resize(this.targetResolution, this.targetResolution, {
+        kernel: 'nearest',
+        fit: 'fill'
+      })
+      .png()
+      .toBuffer();
+    
+    // Update texture positions for upscaled atlas
+    const scaleFactor = this.targetResolution / baseSize;
+    for (const [texturePath, texture] of this.textures) {
+      texture.x = Math.round(texture.x * scaleFactor);
+      texture.y = Math.round(texture.y * scaleFactor);
+    }
+    this.textureSize = Math.round(this.textureSize * scaleFactor);
     
     return this.atlasImage;
   }
@@ -165,10 +199,27 @@ export class TextureAtlas {
     const texture = this.getTextureByRef(texturePath, rawTextures);
     
     // Normalize UV to 0-1 range
-    let u1 = uv[0] / 16;
-    let v1 = uv[1] / 16;
-    let u2 = uv[2] / 16;
-    let v2 = uv[3] / 16;
+    // For entity textures, use the stored original dimensions for proper aspect ratio
+    // Default to 16-unit system (16 units = full texture dimension)
+    let uvScaleU = 16;
+    let uvScaleV = 16;
+    
+    // If texture has non-square aspect ratio, adjust V scale
+    // Entity textures like sign (64x32) need V scaled by 8 instead of 16
+    if (texture && texture.originalWidth && texture.originalHeight) {
+      // Scale based on original texture dimensions
+      // 16 units = originalWidth pixels, so for 64px: 16 units = 64px
+      // For height, scale proportionally
+      const aspectRatio = texture.originalHeight / texture.originalWidth;
+      if (aspectRatio !== 1) {
+        uvScaleV = 16 * aspectRatio;
+      }
+    }
+    
+    let u1 = uv[0] / uvScaleU;
+    let v1 = uv[1] / uvScaleV;
+    let u2 = uv[2] / uvScaleU;
+    let v2 = uv[3] / uvScaleV;
     
     // Handle UV flipping
     const flipU = u1 > u2;
@@ -284,10 +335,14 @@ function nextPowerOf2(n) {
  * Create a texture atlas for a model
  * @param {Object} model - Parsed model
  * @param {string[]} texturePaths - Resolved texture paths
+ * @param {Object} options - Options
+ * @param {number} options.targetResolution - Target resolution for upscaling (default: 8192)
  * @returns {Promise<TextureAtlas>}
  */
-export async function createTextureAtlas(model, texturePaths) {
-  const atlas = new TextureAtlas();
+export async function createTextureAtlas(model, texturePaths, options = {}) {
+  const atlas = new TextureAtlas({
+    targetResolution: options.targetResolution || 8192
+  });
   await atlas.loadTextures(texturePaths);
   await atlas.buildAtlas();
   return atlas;

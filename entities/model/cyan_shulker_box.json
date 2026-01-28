@@ -1,0 +1,141 @@
+{
+  "name": "cyan_shulker_box",
+  "credit": "Community Recreation - Based on Minecraft Default",
+  "textures": {
+    "0": "entity/shulker/shulker_cyan"
+  },
+  "elements": [
+    {
+      "__comment": "Bottom shell (base) - 16x16x8 box",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        8,
+        16
+      ],
+      "faces": {
+        "down": {
+          "texture": "#0",
+          "uv": [
+            4,
+            12,
+            8,
+            16
+          ],
+          "cullface": "down"
+        },
+        "up": {
+          "texture": "#0",
+          "uv": [
+            4,
+            8,
+            8,
+            12
+          ]
+        },
+        "north": {
+          "texture": "#0",
+          "uv": [
+            0,
+            14,
+            4,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            8,
+            14,
+            12,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            4,
+            14,
+            8,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#0",
+          "uv": [
+            12,
+            14,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "__comment": "Top shell (lid) - 16x16x12 box, overlaps with base for closed appearance",
+      "from": [
+        0,
+        4,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#0",
+          "uv": [
+            4,
+            0,
+            8,
+            4
+          ],
+          "cullface": "up"
+        },
+        "north": {
+          "texture": "#0",
+          "uv": [
+            0,
+            4,
+            4,
+            7
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            8,
+            4,
+            12,
+            7
+          ]
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            4,
+            4,
+            8,
+            7
+          ]
+        },
+        "east": {
+          "texture": "#0",
+          "uv": [
+            12,
+            4,
+            16,
+            7
+          ]
+        }
+      }
+    }
+  ],
+  "__comment": "Shulker box in closed state. Texture is 64x64."
+}

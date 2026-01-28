@@ -1,0 +1,406 @@
+{
+  "name": "green_bed",
+  "credit": "Corrected UV mapping based on Minecraft bed entity texture analysis",
+  "textures": {
+    "0": "entity/bed/green"
+  },
+  "__texture_info": "64x64 texture, 1 UV unit = 4 pixels, bed height = 6px (1.5 UV), legs = 3x3",
+  "elements": [
+    {
+      "__comment": "HEAD (pillow end) - 16x6x16 world units, at Z=16-32",
+      "from": [
+        0,
+        3,
+        16
+      ],
+      "to": [
+        16,
+        9,
+        32
+      ],
+      "faces": {
+        "up": {
+          "texture": "#0",
+          "uv": [
+            1.5,
+            1.5,
+            5.5,
+            5.5
+          ],
+          "rotation": 180,
+          "__content": "HEAD TOP - pillow+blanket (16x16 at px 6,6)"
+        },
+        "down": {
+          "texture": "#0",
+          "uv": [
+            7,
+            1.5,
+            11,
+            5.5
+          ],
+          "__content": "HEAD BOTTOM - wood underside (16x16 at px 28,6)"
+        },
+        "north": {
+          "texture": "#0",
+          "uv": [
+            1.5,
+            5.5,
+            5.5,
+            7
+          ],
+          "__content": "HEAD inner side facing foot - use side texture bottom portion"
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            1.5,
+            0,
+            5.5,
+            1.5
+          ],
+          "__content": "HEAD END back of pillow (16x6 at px 6,0)"
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            0,
+            5.5,
+            1.5,
+            1.5
+          ],
+          "rotation": 270,
+          "__content": "HEAD left side - vertically inverted + 180"
+        },
+        "east": {
+          "texture": "#0",
+          "uv": [
+            0,
+            1.5,
+            1.5,
+            5.5
+          ],
+          "rotation": 270,
+          "__content": "HEAD right side - 6x16 rotated opposite"
+        }
+      }
+    },
+    {
+      "__comment": "FOOT - 16x6x16 world units, at Z=0-16",
+      "from": [
+        0,
+        3,
+        0
+      ],
+      "to": [
+        16,
+        9,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#0",
+          "uv": [
+            1.5,
+            7,
+            5.5,
+            11
+          ],
+          "rotation": 180,
+          "__content": "FOOT TOP - red blanket (16x16 at px 6,28)"
+        },
+        "down": {
+          "texture": "#0",
+          "uv": [
+            7,
+            7,
+            11,
+            11
+          ],
+          "__content": "FOOT BOTTOM - wood underside (16x16 at px 28,28)"
+        },
+        "north": {
+          "texture": "#0",
+          "uv": [
+            1.5,
+            9.5,
+            5.5,
+            11
+          ],
+          "__content": "FOOT END front of bed (16x6 at px 6,38)"
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            1.5,
+            9.5,
+            5.5,
+            11
+          ],
+          "__content": "FOOT inner side facing head"
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            0,
+            11,
+            1.5,
+            7
+          ],
+          "rotation": 270,
+          "__content": "FOOT left side - vertically inverted + 180"
+        },
+        "east": {
+          "texture": "#0",
+          "uv": [
+            0,
+            7,
+            1.5,
+            11
+          ],
+          "rotation": 270,
+          "__content": "FOOT right side - 6x16 rotated opposite"
+        }
+      }
+    },
+    {
+      "__comment": "Leg 1 (back-left at head) - 3x3x3",
+      "from": [
+        0,
+        0,
+        29
+      ],
+      "to": [
+        3,
+        3,
+        32
+      ],
+      "faces": {
+        "down": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            0.75,
+            13.25,
+            1.5
+          ]
+        },
+        "north": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            0.75,
+            13.25,
+            1.5
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            0.75,
+            13.25,
+            1.5
+          ]
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            0.75,
+            13.25,
+            1.5
+          ]
+        },
+        "east": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            0.75,
+            13.25,
+            1.5
+          ]
+        }
+      }
+    },
+    {
+      "__comment": "Leg 2 (back-right at head) - 3x3x3",
+      "from": [
+        13,
+        0,
+        29
+      ],
+      "to": [
+        16,
+        3,
+        32
+      ],
+      "faces": {
+        "down": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            0.75,
+            13.25,
+            1.5
+          ]
+        },
+        "north": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            0.75,
+            13.25,
+            1.5
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            0.75,
+            13.25,
+            1.5
+          ]
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            0.75,
+            13.25,
+            1.5
+          ]
+        },
+        "east": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            0.75,
+            13.25,
+            1.5
+          ]
+        }
+      }
+    },
+    {
+      "__comment": "Leg 3 (front-left at foot) - 3x3x3",
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        3,
+        3,
+        3
+      ],
+      "faces": {
+        "down": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            2.25,
+            13.25,
+            3
+          ]
+        },
+        "north": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            2.25,
+            13.25,
+            3
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            2.25,
+            13.25,
+            3
+          ]
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            2.25,
+            13.25,
+            3
+          ]
+        },
+        "east": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            2.25,
+            13.25,
+            3
+          ]
+        }
+      }
+    },
+    {
+      "__comment": "Leg 4 (front-right at foot) - 3x3x3",
+      "from": [
+        13,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        3,
+        3
+      ],
+      "faces": {
+        "down": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            2.25,
+            13.25,
+            3
+          ]
+        },
+        "north": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            2.25,
+            13.25,
+            3
+          ]
+        },
+        "south": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            2.25,
+            13.25,
+            3
+          ]
+        },
+        "west": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            2.25,
+            13.25,
+            3
+          ]
+        },
+        "east": {
+          "texture": "#0",
+          "uv": [
+            12.5,
+            2.25,
+            13.25,
+            3
+          ]
+        }
+      }
+    }
+  ]
+}

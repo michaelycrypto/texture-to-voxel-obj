@@ -41,14 +41,15 @@ function getCategory(entityName, categories) {
 
 /**
  * Resolve texture path to use upscaled textures from export folder
- * Falls back to original entities folder if upscaled not found
+ * Falls back to original entities folder or input folder if upscaled not found
  * Block textures: 4096x (for entities), Entity textures: 4096x
  * @param {string} textureRef - Texture reference (e.g., "block/anvil")
  * @param {string} exportTexturesDir - Export textures directory (e.g., export/Skyblox/textures)
  * @param {string} entitiesDir - Original entities directory (fallback)
+ * @param {string} inputDir - Input texture pack directory (fallback for entity textures)
  * @returns {string} Resolved texture path
  */
-function resolveUpscaledTexturePath(textureRef, exportTexturesDir, entitiesDir) {
+function resolveUpscaledTexturePath(textureRef, exportTexturesDir, entitiesDir, inputDir) {
   if (!textureRef || textureRef.startsWith('#')) {
     return textureRef;
   }
@@ -65,22 +66,34 @@ function resolveUpscaledTexturePath(textureRef, exportTexturesDir, entitiesDir) 
     pathsToCheck.push(path.join(exportTexturesDir, 'block_4096', `${textureName}_4096.png`));
     // Fallback to 1024x version
     pathsToCheck.push(path.join(exportTexturesDir, 'block', `${textureName}_1024.png`));
-    // Fallback to original
+    // Fallback to original in entities folder
     pathsToCheck.push(path.join(entitiesDir, 'block', `${textureName}.png`));
+    // Fallback to input folder
+    if (inputDir) {
+      pathsToCheck.push(path.join(inputDir, 'block', `${textureName}.png`));
+    }
   } else if (cleanRef.startsWith('entity/')) {
     const textureName = cleanRef.replace('entity/', '');
     // Check upscaled version first (entities are 4096x)
     pathsToCheck.push(path.join(exportTexturesDir, 'entity', `${textureName}_4096.png`));
     // Fallback to 1024 version
     pathsToCheck.push(path.join(exportTexturesDir, 'entity', `${textureName}_1024.png`));
-    // Fallback to original
+    // Fallback to original in entities folder
     pathsToCheck.push(path.join(entitiesDir, 'texture', `${textureName}.png`));
+    // Fallback to input folder entity textures (most entity textures are here!)
+    if (inputDir) {
+      pathsToCheck.push(path.join(inputDir, 'entity', `${textureName}.png`));
+    }
   } else {
     // Try block_4096 folder first (4096x for entities)
     pathsToCheck.push(path.join(exportTexturesDir, 'block_4096', `${cleanRef}_4096.png`));
     // Fallback to block folder (1024x)
     pathsToCheck.push(path.join(exportTexturesDir, 'block', `${cleanRef}_1024.png`));
     pathsToCheck.push(path.join(entitiesDir, 'block', `${cleanRef}.png`));
+    // Fallback to input folder
+    if (inputDir) {
+      pathsToCheck.push(path.join(inputDir, 'block', `${cleanRef}.png`));
+    }
   }
 
   // Return first path that exists (or first option if none exist)
@@ -97,7 +110,7 @@ function resolveUpscaledTexturePath(textureRef, exportTexturesDir, entitiesDir) 
  * Process a single model
  */
 async function processModel(modelName, options) {
-  const { entitiesDir, outputDir, pack, scale, verbose, exportTexturesDir } = options;
+  const { entitiesDir, outputDir, pack, scale, verbose, exportTexturesDir, inputDir } = options;
   
   // Model JSON files are in entities/model/ (the static model definitions)
   const modelPath = path.join(entitiesDir, `${modelName}.json`);
@@ -116,8 +129,8 @@ async function processModel(modelName, options) {
   const texturePaths = [];
   for (const [key, value] of Object.entries(model.rawTextures || {})) {
     if (value && !value.startsWith('#')) {
-      // Resolve to upscaled texture path in export folder
-      const resolved = resolveUpscaledTexturePath(value, exportTexturesDir, entitiesBaseDir);
+      // Resolve to upscaled texture path in export folder (with inputDir fallback)
+      const resolved = resolveUpscaledTexturePath(value, exportTexturesDir, entitiesBaseDir, inputDir);
       if (!texturePaths.includes(resolved)) {
         texturePaths.push(resolved);
       }
@@ -130,7 +143,7 @@ async function processModel(modelName, options) {
   const resolvedTextures = {};
   for (const [key, value] of Object.entries(model.rawTextures || {})) {
     if (value && !value.startsWith('#')) {
-      resolvedTextures[key] = resolveUpscaledTexturePath(value, exportTexturesDir, entitiesBaseDir);
+      resolvedTextures[key] = resolveUpscaledTexturePath(value, exportTexturesDir, entitiesBaseDir, inputDir);
     }
   }
   model.textures = resolvedTextures;
@@ -236,6 +249,7 @@ async function processAllModels(options) {
  * @param {string} options.texturepackName - Name of the texturepack
  * @param {string} options.outputBaseDir - Base output directory (e.g., ./export)
  * @param {string} options.entitiesModelDir - Directory containing entity model JSON files
+ * @param {string} options.inputDir - Input directory containing original textures (e.g., ./input/Skyblox)
  * @param {number} options.scale - Scale factor
  * @param {boolean} options.showProgress - Show progress output
  * @returns {Promise<{results: Object[], errors: Object[]}>}
@@ -244,10 +258,13 @@ export async function processEntitiesForPack({
   texturepackName,
   outputBaseDir,
   entitiesModelDir,
+  inputDir,
   scale = 1.0,
   showProgress = true
 }) {
   const exportTexturesDir = path.join(outputBaseDir, texturepackName, 'textures');
+  // Derive inputDir from outputBaseDir if not provided
+  const effectiveInputDir = inputDir || path.join(path.dirname(outputBaseDir), 'input', texturepackName);
   
   // Check if model directory exists
   if (!await fs.pathExists(entitiesModelDir)) {
@@ -292,7 +309,8 @@ export async function processEntitiesForPack({
         pack: texturepackName,
         scale: 1/16 * scale,
         verbose: false,
-        exportTexturesDir
+        exportTexturesDir,
+        inputDir: effectiveInputDir
       });
       
       results.push(result);
@@ -398,6 +416,7 @@ function runCLI() {
     .option('-a, --all', 'Process all models')
     .option('-p, --pack <name>', 'Pack name for output', 'Skyblox')
     .option('-o, --output <dir>', 'Output base directory', './export')
+    .option('-i, --input <dir>', 'Input texture pack directory (default: ./input/{pack})')
     .option('-s, --scale <number>', 'Scale factor (16 units = 1 unit at scale 1)', parseFloat, 1.0)
     .option('-e, --entities-dir <dir>', 'Path to entities model directory', './entities/model')
     .option('-t, --textures-dir <dir>', 'Path to upscaled textures (default: export/{pack}/textures)')
@@ -410,6 +429,9 @@ function runCLI() {
         const exportTexturesDir = options.texturesDir 
           ? path.resolve(options.texturesDir)
           : path.join(outputDir, options.pack, 'textures');
+        const inputDir = options.input
+          ? path.resolve(options.input)
+          : path.join(path.resolve('.'), 'input', options.pack);
         const scale = 1 / 16 * options.scale;
         
         const processOptions = {
@@ -418,7 +440,8 @@ function runCLI() {
           pack: options.pack,
           scale,
           verbose: options.verbose,
-          exportTexturesDir
+          exportTexturesDir,
+          inputDir
         };
         
         if (options.model) {

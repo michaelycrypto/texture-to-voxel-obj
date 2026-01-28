@@ -1,0 +1,36 @@
+{
+  "name": "sign",
+  "credit": "Community Recreation - Based on Minecraft Default",
+  "__comment": "Standing sign with post. Texture is 64x32 (non-square). UVs scaled for 16-unit system.",
+  "textures": {
+    "0": "entity/sign"
+  },
+  "__texture_info": "64x32 texture. For 16-unit UV system: U spans 0-16 (64px), V spans 0-8 (32px)",
+  "elements": [
+    {
+      "__comment": "Sign board - 16 wide, 8 tall, 2 thick (pixels: 24x12x2 at scale)",
+      "from": [0, 7, 7],
+      "to": [16, 15, 9],
+      "faces": {
+        "north": { "texture": "#0", "uv": [0.5, 1, 6.5, 4] },
+        "south": { "texture": "#0", "uv": [7, 1, 13, 4] },
+        "west": { "texture": "#0", "uv": [6.5, 1, 7, 4] },
+        "east": { "texture": "#0", "uv": [0, 1, 0.5, 4] },
+        "up": { "texture": "#0", "uv": [0.5, 0, 6.5, 1] },
+        "down": { "texture": "#0", "uv": [6.5, 0, 12.5, 1] }
+      }
+    },
+    {
+      "__comment": "Post - 2x2 pixels wide, 14 pixels tall",
+      "from": [7, 0, 7],
+      "to": [9, 7, 9],
+      "faces": {
+        "north": { "texture": "#0", "uv": [0.5, 4, 1, 7.5] },
+        "south": { "texture": "#0", "uv": [1, 4, 1.5, 7.5] },
+        "west": { "texture": "#0", "uv": [0, 4, 0.5, 7.5] },
+        "east": { "texture": "#0", "uv": [1.5, 4, 2, 7.5] },
+        "down": { "texture": "#0", "uv": [1, 7.5, 1.5, 8], "cullface": "down" }
+      }
+    }
+  ]
+}

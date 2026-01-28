@@ -23,7 +23,7 @@ async function loadEnv() {
         if (key && valueParts.length > 0) {
           let value = valueParts.join('=').trim();
           // Remove surrounding quotes if present
-          if ((value.startsWith('"') && value.endsWith('"')) || 
+          if ((value.startsWith('"') && value.endsWith('"')) ||
               (value.startsWith("'") && value.endsWith("'"))) {
             value = value.slice(1, -1);
           }
@@ -109,7 +109,7 @@ async function uploadAsset(modelPath, displayName, apiKey, creator, maxRetries =
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const bodyFormData = new FormData();
-      
+
       bodyFormData.append('request', JSON.stringify({
         assetType: 'Model',
         creationContext: {
@@ -137,13 +137,13 @@ async function uploadAsset(modelPath, displayName, apiKey, creator, maxRetries =
       };
     } catch (error) {
       const waitTime = getRateLimitWaitTime(error);
-      
+
       if (waitTime && attempt < maxRetries) {
         console.log(`  ⏳ Rate limited. Waiting ${Math.ceil(waitTime / 1000)}s before retry (attempt ${attempt + 1}/${maxRetries})...`);
         await sleep(waitTime);
         continue;
       }
-      
+
       throw error;
     }
   }
@@ -167,7 +167,7 @@ async function pollForCompletion(operationPath, apiKey, maxAttempts = 30, delayM
       const fullUrl = operationPath.startsWith('operations/')
         ? `https://apis.roblox.com/assets/v1/${operationPath}`
         : `https://apis.roblox.com/${operationPath}`;
-      
+
       const response = await Axios.get(fullUrl, {
         headers: {
           'x-api-key': apiKey
@@ -179,12 +179,12 @@ async function pollForCompletion(operationPath, apiKey, maxAttempts = 30, delayM
         if (response.data.error) {
           throw new Error(JSON.stringify(response.data.error));
         }
-        
+
         const assetId = response.data.response?.assetId;
         if (assetId) {
           return assetId;
         }
-        
+
         // If no assetId but operation is done, something went wrong
         throw new Error(`Operation completed without asset ID: ${JSON.stringify(response.data)}`);
       }
@@ -192,7 +192,7 @@ async function pollForCompletion(operationPath, apiKey, maxAttempts = 30, delayM
       await sleep(delayMs);
     } catch (error) {
       const waitTime = getRateLimitWaitTime(error);
-      
+
       if (waitTime && rateLimitRetries < maxRateLimitRetries) {
         console.log(`  ⏳ Rate limited during poll. Waiting ${Math.ceil(waitTime / 1000)}s...`);
         await sleep(waitTime);
@@ -201,7 +201,7 @@ async function pollForCompletion(operationPath, apiKey, maxAttempts = 30, delayM
         attempt--;
         continue;
       }
-      
+
       throw error;
     }
   }
@@ -217,7 +217,7 @@ async function pollForCompletion(operationPath, apiKey, maxAttempts = 30, delayM
 async function findModelFiles(dir, extension = '.fbx') {
   const files = [];
   if (!await fs.pathExists(dir)) return files;
-  
+
   const entries = await fs.readdir(dir, { withFileTypes: true });
   for (const entry of entries) {
     const fullPath = path.join(dir, entry.name);
@@ -263,17 +263,17 @@ export async function uploadTexturepack(texturepackName, exportBaseDir = './expo
   // Try GLB first, then FBX, then OBJ
   let modelFiles = await findModelFiles(modelsDir, '.glb');
   let fileType = 'GLB';
-  
+
   if (modelFiles.length === 0) {
     modelFiles = await findModelFiles(modelsDir, '.fbx');
     fileType = 'FBX';
   }
-  
+
   if (modelFiles.length === 0) {
     modelFiles = await findModelFiles(modelsDir, '.obj');
     fileType = 'OBJ';
   }
-  
+
   if (modelFiles.length === 0) {
     console.log(`No GLB, FBX, or OBJ files found in ${modelsDir}`);
     return;
@@ -288,8 +288,8 @@ export async function uploadTexturepack(texturepackName, exportBaseDir = './expo
   // Track results by subfolder
   const results = {};
   const errors = [];
-  // 2 second delay between uploads to avoid rate limits
-  const delayBetweenUploads = 2000;
+  // 1 second delay between uploads to avoid rate limits
+  const delayBetweenUploads = 1000;
   const fileExtension = fileType === 'GLB' ? '.glb' : (fileType === 'FBX' ? '.fbx' : '.obj');
 
   progress.render();
@@ -304,7 +304,7 @@ export async function uploadTexturepack(texturepackName, exportBaseDir = './expo
 
     try {
       const uploadResult = await uploadAsset(modelPath, itemName, API_KEY, creator);
-      
+
       progress.update({ currentItem: `${itemName} (processing...)` });
 
       const assetId = await pollForCompletion(uploadResult.operationPath, API_KEY);

@@ -167,17 +167,17 @@ export function generateGLBFromPixels({
 
   // Align to 4 bytes
   const align4 = (n) => Math.ceil(n / 4) * 4;
-  
+
   let bufferOffset = 0;
   const positionOffset = bufferOffset;
   bufferOffset += align4(positionByteLength);
-  
+
   const normalOffset = bufferOffset;
   bufferOffset += align4(normalByteLength);
-  
+
   const uvOffset = bufferOffset;
   bufferOffset += align4(uvByteLength);
-  
+
   const indexOffset = bufferOffset;
   bufferOffset += align4(indexByteLength);
 
@@ -195,7 +195,7 @@ export function generateGLBFromPixels({
   // Add rotation to correct orientation when using z-up conversion
   // The z-up conversion rotates the model, so we add a compensating rotation
   // Quaternion for 90° around X axis: [sin(45°), 0, 0, cos(45°)] = [0.7071068, 0, 0, 0.7071068]
-  const nodeRotation = coordinateSystem === 'z-up' 
+  const nodeRotation = coordinateSystem === 'z-up'
     ? [0.7071067811865475, 0, 0, 0.7071067811865476]  // 90° around X to stand model upright
     : undefined;
 
@@ -206,8 +206,8 @@ export function generateGLBFromPixels({
     },
     scene: 0,
     scenes: [{ nodes: [0] }],
-    nodes: [{ 
-      mesh: 0, 
+    nodes: [{
+      mesh: 0,
       name: modelName,
       ...(nodeRotation && { rotation: nodeRotation })
     }],
